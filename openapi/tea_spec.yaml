@@ -1,0 +1,217 @@
+openapi: 3.0.3
+info:
+  title: OpenAPI Transparency Exchange API specification 
+  description: |-
+    This is an OpenAPI specification of the Transparency Exchange API specification - Project Koala.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.1.0
+paths:
+  /component/list:
+    get:
+      tags:
+        - component
+      summary: List Components
+      description: List all available components
+      operationId: listComponents
+      parameters:
+        - name: visibility
+          in: query
+          description: Used to specify whether we list public or private components
+          required: false
+          schema:
+            type: string
+            enum:
+              - publiconly
+              - allavailable
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Component'          
+  /component/{componentId}/branches:
+    get:
+      tags:
+        - component
+      summary: List Branches of Component
+      description: List all present Branches of Component
+      operationId: listComponentBranches
+      parameters:
+        - name: componentId
+          in: path
+          required: true
+          description: Component for which to list branches
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Branch'
+  /component/{componentId}/releases:
+    get:
+      tags:
+        - component
+      summary: List Releases of Component
+      description: List all known Releases of Component across all Branches
+      operationId: listComponentReleases
+      parameters:
+        - name: componentId
+          in: path
+          required: true
+          description: Component for which to list releases
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Release'
+  /branch/{branchId}/releases:
+    get:
+      tags:
+        - branch
+      summary: List Releases of Branch
+      description: List all known Releases of Branch
+      operationId: listBranchReleases
+      parameters:
+        - name: branchId
+          in: path
+          required: true
+          description: Branch for which to list releases
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Release'
+  /release/{releaseId}:
+    get:
+      tags:
+        - release
+      summary: Show release details
+      description: Show details of specific release
+      operationId: getRelease
+      parameters:
+        - name: releaseId
+          in: path
+          required: true
+          description: Release id to show details
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Release'
+components:
+  schemas:
+    Component:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        name:
+          type: string
+          example: Awesome Component
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+    Branch:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        name:
+          type: string
+          example: Awesome Branch
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+    Release:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        version:
+          type: string
+          example: 0.1.0
+        created:
+          type: string
+          format: date-time
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+        status:
+          type: string
+          enum:
+            - draft
+            - rejected
+            - completed
+    Artifact:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        identifier:
+          type: string
+          example: registry.relizahub.com/library/rebom-backend
+    Lifecycle:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - firstMention
+            - alphaTesting
+            - betaTesting
+            - releaseCandidate
+            - generalAvailability
+            - endOfDevelopment
+            - endOfSales
+            - endOfSupport
+            - endOfLife
+        date:
+          type: string
+          format: date-time
