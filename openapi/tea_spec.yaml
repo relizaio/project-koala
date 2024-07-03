@@ -8,6 +8,80 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 0.1.0
 paths:
+  /bundle/list:
+    get:
+      tags:
+        - bundle
+      summary: List Bundles
+      description: List all available bundles
+      operationId: listBundles
+      parameters:
+        - name: visibility
+          in: query
+          description: Used to specify whether we list public or private components
+          required: false
+          schema:
+            type: string
+            enum:
+              - PUBLICONLY
+              - ALLAVAILABLE
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bundle'
+  /bundle/{bundleId}/featureSets:
+    get:
+      tags:
+        - bundle
+      summary: List Feature Sets of Bundle
+      description: List all present Feature Sets of Bundles
+      operationId: listBundleFeatureSets
+      parameters:
+        - name: bundleId
+          in: path
+          required: true
+          description: Bundle for which to list feature sets
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureSet'
+  /bundle/{bundleId}/releases:
+    get:
+      tags:
+        - bundle
+      summary: List Releases of Bundle
+      description: List all known Releases of Bundle across all Feature Sets
+      operationId: listBundleReleases
+      parameters:
+        - name: bundleId
+          in: path
+          required: true
+          description: Bundle for which to list releases
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Release'
   /component/list:
     get:
       tags:
@@ -23,8 +97,8 @@ paths:
           schema:
             type: string
             enum:
-              - publiconly
-              - allavailable
+              - PUBLICONLY
+              - ALLAVAILABLE
       responses:
         '200':
           description: successful operation
@@ -106,6 +180,30 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Release'
+  /featureSet/{featureSetId}/releases:
+    get:
+      tags:
+        - featureSet
+      summary: List Releases of Feature Set
+      description: List all known Releases of Feature Set
+      operationId: listFeatureSetReleases
+      parameters:
+        - name: featureSetId
+          in: path
+          required: true
+          description: Feature set for which to list releases
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Release'
   /release/{releaseId}:
     get:
       tags:
@@ -146,7 +244,35 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Lifecycle'
+    Bundle:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        name:
+          type: string
+          example: Awesome Bundle
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
     Branch:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        name:
+          type: string
+          example: Awesome Branch
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+    FeatureSet:
       type: object
       properties:
         uuid:
@@ -181,12 +307,27 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Lifecycle'
+        upstreamComponents:
+          description: components that make up this release, must be populated for bundle releases
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                  - COMPONENT
+                  - BUNDLE
+              identifier:
+                type: string
+                format: uuid
+                example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
         status:
           type: string
           enum:
-            - draft
-            - rejected
-            - completed
+            - DRAFT
+            - REJECTED
+            - COMPLETED
     Artifact:
       type: object
       properties:
@@ -197,21 +338,93 @@ components:
         identifier:
           type: string
           example: registry.relizahub.com/library/rebom-backend
+        boms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bom'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
     Lifecycle:
       type: object
       properties:
         event:
           type: string
           enum:
-            - firstMention
-            - alphaTesting
-            - betaTesting
-            - releaseCandidate
-            - generalAvailability
-            - endOfDevelopment
-            - endOfSales
-            - endOfSupport
-            - endOfLife
+            - FIRST_MENTION
+            - ALPHA_TESTING
+            - BETA_TESTING
+            - RELEASE_CANDIDATE
+            - GENERAL_AVAILABILITY
+            - END_OF_DEVELOPMENT
+            - END_OF_SALES
+            - END_OF_SUPPORT
+            - END_OF_LIFE
         date:
           type: string
           format: date-time
+    Bom:
+      type: object
+      properties:
+        identifier:
+          type: string
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        version:
+          type: string
+          example: 1
+        downloadLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        inventoryTypes:
+          type: array
+          items:
+            enum:
+              - SOFTWARE
+              - HARDWARE
+              - CRYPTOGRAPHY
+              - SERVICE
+              - VULNERABILITY
+        bomFormat:
+          type: string
+          example: CycloneDX
+        date:
+          type: string
+          format: date-time
+    Attachment:
+      type: object
+      properties:
+        type:
+          type: array
+          items:
+            enum:
+              - ATTESTATION
+              - VDR
+              - VEX
+        identifier:
+          type: string
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        version:
+          type: string
+          example: 1
+        downloadLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        date:
+          type: string
+          format: date-time
+    Link:
+      type: object
+      properties:
+        uri:
+          type: string
+          example: https://mysite.com/mysbom.json
+        content:
+          type: string
+          enum:
+            - OCI
+            - PLAIN_JSON
+            - OCTET_STREAM
+            - PLAIN_XML
