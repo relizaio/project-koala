@@ -396,12 +396,11 @@ components:
       type: object
       properties:
         type:
-          type: array
-          items:
-            enum:
-              - ATTESTATION
-              - VDR
-              - VEX
+          type: string
+          enum:
+            - ATTESTATION
+            - VDR
+            - VEX
         identifier:
           type: string
           example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
