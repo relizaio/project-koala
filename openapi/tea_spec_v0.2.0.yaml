@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: OpenAPI Transparency Exchange API specification 
+  description: |-
+    This is an OpenAPI specification of the Transparency Exchange API specification - Project Koala.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.2.0
+paths:
+  /product/{tei}:
+    get:
+      tags:
+        - product
+      summary: Display Product
+      description: Show product with all leafs
+      operationId: displayProduct
+      parameters:
+        - name: tei
+          in: path
+          required: true
+          description: TEI unique product index
+          schema:
+            type: string
+        - name: visibility
+          in: query
+          description: Used to specify whether we list public or private components
+          required: false
+          schema:
+            type: string
+            enum:
+              - PUBLICONLY
+              - ALLAVAILABLE
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+  /leaf/{tei}:
+    get:
+      tags:
+        - leaf
+      summary: Display leaf
+      description: Show all collection versions for leaf
+      operationId: displayLeaf
+      parameters:
+        - name: tei
+          in: path
+          required: true
+          description: TEI unique leaf index
+          schema:
+            type: string
+        - name: visibility
+          in: query
+          description: Used to specify whether we list public or private components
+          required: false
+          schema:
+            type: string
+            enum:
+              - PUBLICONLY
+              - ALLAVAILABLE
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionEl'
+  /collection/{collectionId}:
+    get:
+      tags:
+        - collection
+      summary: Display Collection
+      description: Show collection contents
+      operationId: displayCollection
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          description: id assigned in the system to the specific collection as returned by collection element
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collection'
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        name:
+          type: string
+          example: Awesome Product
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+        leafs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Leaf'
+    Leaf:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        name:
+          type: string
+          example: Awesome Leaf
+        tei:
+          type: string
+          example: urn:tei:uuid:products.example.com:d4d9f54a-abcf-11ee-ac79-1a52914d44b1?version=3
+        version:
+          type: string
+          example: 0.1.0
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+    CollectionEl:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        version:
+          type: string
+          example: 0.1.0
+    Collection:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        identities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Identity'
+        version:
+          type: string
+          example: 7.50.3-1
+        created:
+          type: string
+          format: date-time
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+    Artifact:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: 5d0f59cd-5787-4e42-8e22-a2343cf19dd8
+        displayIdentifier:
+          type: string
+          example: pkg:deb/debian/curl@7.50.3-1?arch=i386&distro=jessie
+        identities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Identity'
+        type:
+          type: string
+          enum:
+            - BOM
+            - ATTESTATION
+            - VDR
+            - VEX
+            - OTHER
+        version:
+          type: string
+          example: 1
+        downloadLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        date:
+          type: string
+          format: date-time
+        inventoryTypes:
+          type: array
+          items:
+            type: string
+            enum:
+              - SOFTWARE
+              - HARDWARE
+              - CRYPTOGRAPHY
+              - SERVICE
+              - VULNERABILITY
+        bomFormat:
+          type: string
+          example: CycloneDX
+    Lifecycle:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - FIRST_MENTION
+            - ALPHA_TESTING
+            - BETA_TESTING
+            - RELEASE_CANDIDATE
+            - GENERAL_AVAILABILITY
+            - END_OF_DEVELOPMENT
+            - END_OF_SALES
+            - END_OF_SUPPORT
+            - END_OF_LIFE
+        date:
+          type: string
+          format: date-time
+    Identity:
+      type: object
+      properties:
+        type:
+          type: string
+          example: PURL
+        identifier:
+          type: string
+          example: pkg:deb/debian/curl@7.50.3-1?arch=i386&distro=jessie
+    Link:
+      type: object
+      properties:
+        uri:
+          type: string
+          example: https://mysite.com/mysbom.json
+        content:
+          type: string
+          enum:
+            - OCI
+            - PLAIN_JSON
+            - OCTET_STREAM
+            - PLAIN_XML
