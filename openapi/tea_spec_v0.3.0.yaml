@@ -254,9 +254,6 @@ paths:
       responses:
         '200':
           description: Successful operation
-          headers:
-            Link:
-              $ref: '#/components/headers/Link'
           content:
             application/json:
               schema:
