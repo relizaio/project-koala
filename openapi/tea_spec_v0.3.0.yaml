@@ -1,0 +1,530 @@
+openapi: 3.0.3
+info:
+  title: Transparency Exchange API Specification
+  description: |-
+    This is an OpenAPI specification of the Transparency Exchange API (TEA) - Project Koala.
+    
+    The Transparency Exchange API allows for the discovery, retrieval, and publication of software transparency artifacts such as SBOMs, VEX, and other related documents.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.3.0
+servers:
+  - url: https://tea.example.com/0.3.0/
+    description: Production Transparency Exchange API
+paths:
+  /.well-known/tei/{tei}:
+    get:
+      tags:
+        - discovery
+      summary: TEA Discovery
+      description: Discover TEA endpoint for a given TEI
+      operationId: teaDiscovery
+      parameters:
+        - name: tei
+          in: path
+          required: true
+          description: Transparency Exchange Identifier (TEI) URN
+          schema:
+            type: string
+            pattern: '^urn:tei:[a-z]+:[a-zA-Z0-9.-]+:[a-zA-Z0-9-]+$'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoveryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /product/{tei}:
+    get:
+      tags:
+        - product
+      summary: Display Product
+      description: Show product with all leafs
+      operationId: displayProduct
+      parameters:
+        - name: tei
+          in: path
+          required: true
+          description: Transparency Exchange Identifier (TEI) URN
+          schema:
+            type: string
+            pattern: '^urn:tei:[a-z]+:[a-zA-Z0-9.-]+:[a-zA-Z0-9-]+$'
+        - name: visibility
+          in: query
+          description: Used to specify whether we list public or private components
+          required: false
+          schema:
+            type: string
+            enum:
+              - PUBLICONLY
+              - ALLAVAILABLE
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/perPageParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /leaf/{tei}:
+    get:
+      tags:
+        - leaf
+      summary: Display leaf
+      description: Show all collection versions for leaf
+      operationId: displayLeaf
+      parameters:
+        - name: tei
+          in: path
+          required: true
+          description: Transparency Exchange Identifier (TEI) URN
+          schema:
+            type: string
+            pattern: '^urn:tei:[a-z]+:[a-zA-Z0-9.-]+:[a-zA-Z0-9-]+$'
+        - name: visibility
+          in: query
+          description: Used to specify whether we list public or private components
+          required: false
+          schema:
+            type: string
+            enum:
+              - PUBLICONLY
+              - ALLAVAILABLE
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/perPageParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCollectionElResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /collection/{collectionId}:
+    get:
+      tags:
+        - collection
+      summary: Display Collection
+      description: Show collection contents
+      operationId: displayCollection
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          description: ID assigned in the system to the specific collection as returned by collection element
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - collection
+      summary: Update Collection
+      description: Update an existing collection
+      operationId: updateCollection
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          description: ID assigned in the system to the specific collection
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Collection'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - collection
+      summary: Delete Collection
+      description: Delete an existing collection
+      operationId: deleteCollection
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          description: ID assigned in the system to the specific collection
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful operation
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /collection:
+    post:
+      tags:
+        - collection
+      summary: Create Collection
+      description: Create a new collection
+      operationId: createCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Collection'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /artifact:
+    post:
+      tags:
+        - artifact
+      summary: Publish Artifact Information
+      description: Publish information about an artifact to a collection
+      operationId: publishArtifactInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactInfo'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /search:
+    get:
+      tags:
+        - search
+      summary: Search Products and Collections
+      description: Search for products and collections based on various criteria
+      operationId: searchProductsCollections
+      parameters:
+        - name: query
+          in: query
+          description: Search query string
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Type of items to search for
+          required: false
+          schema:
+            type: string
+            enum: [product, collection, all]
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/perPageParam'
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            Link:
+              $ref: '#/components/headers/Link'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+components:
+  parameters:
+    pageParam:
+      name: page
+      in: query
+      description: Page number for pagination
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    perPageParam:
+      name: per_page
+      in: query
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        minimum: 10
+        maximum: 100
+        default: 10
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    DiscoveryResponse:
+      type: object
+      properties:
+        apiEndpoint:
+          type: string
+          format: uri
+        apiVersion:
+          type: string
+
+    PaginatedProductResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        page:
+          type: integer
+        perPage:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer
+
+    PaginatedCollectionElResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionEl'
+        page:
+          type: integer
+        perPage:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer
+
+    SearchResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        collections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Collection'
+        page:
+          type: integer
+        perPage:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer
+
+    Product:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+        leafs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Leaf'
+
+    Leaf:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        tei:
+          type: string
+          pattern: '^urn:tei:[a-z]+:[a-zA-Z0-9.-]+:[a-zA-Z0-9-]+$'
+        version:
+          type: string
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+
+    CollectionEl:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        version:
+          type: string
+
+    Collection:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        product:
+          $ref: '#/components/schemas/ProductInfo'
+        version:
+          type: integer
+        author:
+          $ref: '#/components/schemas/Author'
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lifecycle'
+
+    ProductInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        releaseDate:
+          type: string
+          format: date
+        teiId:
+          type: string
+          pattern: '^urn:tei:[a-z]+:[a-zA-Z0-9.-]+:[a-zA-Z0-9-]+$'
+
+    Author:
+      type: object
+      properties:
+        name:
+          type: string
+        org:
+          type: string
+        email:
+          type: string
+          format: email
+
+    Artifact:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        author:
+          $ref: '#/components/schemas/Author'
+        formats:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtifactFormat'
+
+    ArtifactFormat:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        bomIdentifier:
+          type: string
+        mediaType:
+          type: string
+        category:
+          type: string
+        url:
+          type: string
+          format: uri
+        sigUrl:
+          type: string
+          format: uri
+        hash:
+          type: string
+        size:
+          type: integer
+
+    ArtifactInfo:
+      type: object
+      properties:
+        collections:
+          type: array
+          items:
+            type: string
+        artifact:
+          $ref: '#/components/schemas/Artifact'
+
+    Lifecycle:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - FIRST_MENTION
+            - ALPHA_TESTING
+            - BETA_TESTING
+            - RELEASE_CANDIDATE
+            - GENERAL_AVAILABILITY
+            - END_OF_DEVELOPMENT
+            - END_OF_SALES
+            - END_OF_SUPPORT
+            - END_OF_LIFE
+        date:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
