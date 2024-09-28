@@ -6,7 +6,7 @@ info:
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 0.2.0
+  version: 0.2.1
 paths:
   /product/{tei}:
     get:
@@ -255,3 +255,9 @@ components:
             - PLAIN_JSON
             - OCTET_STREAM
             - PLAIN_XML
+        public:
+          description: Used to indicate whether the uri is public or private
+          type: string
+          enum:
+            - PUBLIC
+            - PRIVATE
