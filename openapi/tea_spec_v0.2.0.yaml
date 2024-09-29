@@ -1,12 +1,14 @@
 openapi: 3.0.3
 info:
-  title: OpenAPI Transparency Exchange API specification 
+  title: Transparency Exchange API Specification
   description: |-
-    This is an OpenAPI specification of the Transparency Exchange API specification - Project Koala.
+    This is an OpenAPI specification of the Transparency Exchange API (TEA) - Project Koala.
+    
+    The Transparency Exchange API allows for the discovery, retrieval, and publication of software transparency artifacts such as SBOMs, VEX, and other related documents.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 0.2.1
+  version: 0.2.1+urlfixes
 paths:
   /product/{tei}:
     get:
@@ -19,9 +21,10 @@ paths:
         - name: tei
           in: path
           required: true
-          description: TEI unique product index
+          description: Transparency Exchange Identifier (TEI) URN
           schema:
             type: string
+            pattern: '^urn:tei:[a-z]+:[a-zA-Z0-9.-]+:[a-zA-Z0-9-]+$'
         - name: visibility
           in: query
           description: Used to specify whether we list public or private components
@@ -44,7 +47,7 @@ paths:
     get:
       tags:
         - leaf
-      summary: Display leaf
+      summary: Display leaf index
       description: Show all collection versions for leaf
       operationId: displayLeaf
       parameters:
@@ -127,6 +130,7 @@ components:
           example: Awesome Leaf
         tei:
           type: string
+          pattern: '^urn:tei:[a-z]+:[a-zA-Z0-9.-]+:[a-zA-Z0-9-]+$'
           example: urn:tei:uuid:products.example.com:d4d9f54a-abcf-11ee-ac79-1a52914d44b1?version=3
         version:
           type: string
@@ -245,7 +249,7 @@ components:
     Link:
       type: object
       properties:
-        uri:
+        url:
           type: string
           example: https://mysite.com/mysbom.json
         content:
@@ -255,9 +259,6 @@ components:
             - PLAIN_JSON
             - OCTET_STREAM
             - PLAIN_XML
-        public:
-          description: Used to indicate whether the uri is public or private
-          type: string
-          enum:
-            - PUBLIC
-            - PRIVATE
+        isPublic:
+          description: Used to indicate whether the URL is public or not
+          type: boolean
